@@ -13,4 +13,5 @@ spec:
   ports:
     - protocol: TCP
       port: 80          # The port the Service exposes externally
-      targetPort: 30008  # Must match containerPort in the Deployment above
+      targetPort: 80  # Must match containerPort in the Deployment above
+      nodePort: 30008
