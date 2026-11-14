@@ -1,0 +1,147 @@
+---
+- name: Configure Jenkins Kubernetes Master Agent Node via Groovy API
+  hosts: localhost
+  gather_facts: false
+  vars:
+    jenkins_url: "http://184.198.67.66:8080"
+    jenkins_user: "Jyothi V"         # Update with your Jenkins admin username if needed
+    jenkins_api_token: "{{ lookup('env', 'JENKINS_API_TOKEN') }}" # Or put your token/password here
+    node_name: "K8s"
+    node_description: "K8s node"
+    num_executors: "1"
+    remote_dir: "/home/ubuntu/jenkins"
+    node_labels: "K8s node"
+    host_ip: "100.60.27.103"     # Replace with your actual K8s Master Host IP
+    ssh_username: "ubuntu"
+    credential_id: "k8s-ssh-credential-id"
+    private_key_content: |
+      -----BEGIN OPENSSH PRIVATE KEY-----
+      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
+      -----END OPENSSH PRIVATE KEY-----
+
+  tasks:
+    - name: Create or Update Credentials and Node in Jenkins via Groovy
+      ansible.builtin.uri:
+        url: "{{ jenkins_url }}/scriptText"
+        method: POST
+        user: "{{ jenkins_user }}"
+        password: "{{ jenkins_api_token }}"
+        force_basic_auth: true
+        body_format: form-urlencoded
+        body:
+          script: |
+            import jenkins.model.*
+            import hudson.slaves.*
+            import hudson.plugins.sshslaves.*
+            import com.cloudbees.jenkins.plugins.sshcredentials.impl.*
+            import com.cloudbees.plugins.credentials.*
+            import com.cloudbees.plugins.credentials.domains.*
+            import com.cloudbees.plugins.credentials.impl.*
+
+            def instance = Jenkins.getInstance()
+
+            // 1. Add or Update SSH Private Key Credentials
+            def credentialsStore = instance.getExtensionList('com.cloudbees.plugins.credentials.SystemCredentialsProvider')[0].getStore()
+            def domain = Domain.global()
+            
+            def privateKeySource = new BasicSSHUserPrivateKey.DirectEntryPrivateKeySource('''{{ privateKey_content }}''')
+            def credentials = new BasicSSHUserPrivateKey(
+                CredentialsScope.GLOBAL,
+                "{{ credential_id }}",
+                "{{ ssh_username }}",
+                privateKeySource,
+                "",
+                "Jenkins K8s SSH Key"
+            )
+            
+            // Check if credential exists, update or add
+            def existingCreds = credentialsStore.getCredentials(domain).find { it.id == "{{ credential_id }}" }
+            if (existingCreds != null) {
+                credentialsStore.updateCredentials(domain, existingCreds, credentials)
+            } else {
+                credentialsStore.addCredentials(domain, credentials)
+            }
+
+            // 2. Create or Update the Dumb Slave (SSH Agent)
+            def nodeName = "{{ node_name }}"
+            def existingNode = instance.getNode(nodeName)
+            if (existingNode != null) {
+                instance.removeNode(existingNode)
+            }
+
+            // Set up launcher
+            ComputerLauncher launcher = new SSHLauncher(
+                "{{ host_ip }}",
+                22,
+                "{{ credential_id }}",
+                "", // jvmOptions
+                "", // javaPath
+                "", // prefixStartAgentCommand
+                "", // suffixStartAgentCommand
+                60, // launchTimeoutSeconds
+                3,  // maxNumRetries
+                10, // retryWaitTime
+                new com.cloudbees.jenkins.plugins.sshslaves.verifiers.NonVerifyingKeyVerificationStrategy()
+            )
+
+            Slave slave = new DumbSlave(
+                nodeName,
+                "{{ remote_dir }}",
+                launcher
+            )
+            slave.setNumExecutors({{ num_executors }})
+            slave.setLabelString("{{ node_labels }}")
+            slave.setMode(Node.Mode.NORMAL)
+            slave.setRetentionStrategy(new RetentionStrategy.Always())
+
+            instance.addNode(slave)
+            println("Successfully created Jenkins agent node: " + nodeName)
+        status_code: [200]
