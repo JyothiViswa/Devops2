@@ -1,0 +1,84 @@
+pipeline {
+    agent { label 'k8s_masternode' }
+
+    environment {
+        IMAGE_NAME = "webapp-app"
+        DOCKER_HUB_REPO = "jyothihelios/webapp-app"
+        K8S_DEPLOYMENT = "webapp-deployment"
+        K8S_CONTAINER = "webapp-container"
+    }
+
+    stages {
+        stage('Job1 : build') {
+            steps {
+                echo "Pulling code from GitHub repository..."
+                git branch: 'main', url: 'https://github.com/JyothiViswa/Devops2.git'
+                
+                echo "Building Docker image from Dockerfile..."
+                sh "docker build -t ${IMAGE_NAME}:${env.BUILD_NUMBER} ."
+            }
+        }
+
+        stage('Job2 : test') {
+            steps {
+                sh """
+                    echo "Starting container for testing..."
+                    docker run -d --name temp-webapp-test -p 8081:80 ${IMAGE_NAME}:${env.BUILD_NUMBER}
+
+                    # Give Apache a couple of seconds to initialize
+                    sleep 3
+                    
+                    # Run curl test to verify the server is responding
+                    curl -f http://localhost:8081 || (docker stop temp-webapp-test && docker rm temp-webapp-test && exit 1)
+                    
+                    # Clean up the test container
+                    docker stop temp-webapp-test
+                    docker rm temp-webapp-test
+                """
+            }
+        }
+
+        stage('Job3 : push & deploy to K8s') {
+            steps {
+                echo "Pushing image to Docker Hub and deploying to Kubernetes..."
+                withCredentials([usernamePassword(credentialsId: 'Docker_Hub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh '''
+                        # Login to Docker Hub securely
+                        echo "${DOCKER_PASS}" | docker login -u "${DOCKER_USER}" --password-stdin
+
+                        echo "Tagging and pushing image to Docker Hub..."
+                        docker tag ${IMAGE_NAME}:${BUILD_NUMBER} ${DOCKER_HUB_REPO}:latest
+                        docker tag ${IMAGE_NAME}:${BUILD_NUMBER} ${DOCKER_HUB_REPO}:${BUILD_NUMBER}
+                        docker push ${DOCKER_HUB_REPO}:latest
+                        docker push ${DOCKER_HUB_REPO}:${BUILD_NUMBER}
+
+                        echo "Deploying to Kubernetes cluster..."
+                        # Option A: Apply YAML manifests if they exist in your GitHub repo
+                        # kubectl apply -f deployment.yaml
+                        # kubectl apply -f service.yaml
+
+                        # Option B: Create/Update deployment dynamically with the exact build tag
+                        kubectl create deployment ${K8S_DEPLOYMENT} --image=${DOCKER_HUB_REPO}:${BUILD_NUMBER} --dry-run=client -o yaml | kubectl apply -f -
+                        kubectl set image deployment/${K8S_DEPLOYMENT} ${IMAGE_NAME}=${DOCKER_HUB_REPO}:${BUILD_NUMBER}
+
+                        # Expose the deployment if the service doesn't exist yet
+                        kubectl get service ${K8S_DEPLOYMENT} || kubectl expose deployment ${K8S_DEPLOYMENT} --type=NodePort --port=80
+
+                        # Wait for the rollout to complete successfully
+                        kubectl rollout status deployment/${K8S_DEPLOYMENT}
+                        
+                        echo "Kubernetes deployment completed successfully!"
+                    '''
+                }
+            }
+        }
+    }
+    post {
+        always {
+            echo "Cleaning up local build images..."
+            sh "docker rmi ${IMAGE_NAME}:${env.BUILD_NUMBER} || true"
+            sh "docker rmi ${DOCKER_HUB_REPO}:${env.BUILD_NUMBER} || true"
+            sh "docker rmi ${DOCKER_HUB_REPO}:latest || true"
+        }
+    }   
+}
