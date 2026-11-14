@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webapp
+  labels:
+    app: webapp
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: webapp
+  template:
+    metadata:
+      labels:
+        app: webapp
+    spec:
+      containers:
+        - name: app-container
+          # Replace with your Docker Hub username, repository, and tag (e.g., nginx:latest)
+          image: jyothihelios/webapp-app:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080 # Replace with the port your container listens on
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          env:
+            - name: ENVIRONMENT
+              value: "production"
+          # Optional: Health checks to ensure your app is running and ready for traffic
+          livenessProbe:
+            httpGet:
+              path: /health # Update to your health endpoint or remove if unused
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /ready # Update to your readiness endpoint or remove if unused
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      # Optional: Uncomment the lines below ONLY if your Docker Hub repository is private
+      # imagePullSecrets:
+      #   - name: regcred
