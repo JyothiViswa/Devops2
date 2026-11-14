@@ -5,7 +5,7 @@
   vars:
     jenkins_url: "http://184.198.67.66:8080"
     jenkins_user: "Jyothi V"         # Update with your Jenkins admin username if needed
-    jenkins_api_token: "{{ lookup('env', 'JENKINS_API_TOKEN') }}" # Or put your token/password here
+    jenkins_api_token: "{{ lookup('env', '11769842f010aaa6470fbb7eb1f14d3c9b') }}" # Or put your token/password here
     node_name: "K8s"
     node_description: "K8s node"
     num_executors: "1"
