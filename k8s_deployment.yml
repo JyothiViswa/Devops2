@@ -31,19 +31,7 @@ spec:
           env:
             - name: ENVIRONMENT
               value: "production"
-          # Optional: Health checks to ensure your app is running and ready for traffic
-          livenessProbe:
-            httpGet:
-              path: /health # Update to your health endpoint or remove if unused
-              port: 80
-            initialDelaySeconds: 15
-            periodSeconds: 20
-          readinessProbe:
-            httpGet:
-              path: /ready # Update to your readiness endpoint or remove if unused
-              port: 80
-            initialDelaySeconds: 5
-            periodSeconds: 10
+          
       # Optional: Uncomment the lines below ONLY if your Docker Hub repository is private
       # imagePullSecrets:
       #   - name: regcred
